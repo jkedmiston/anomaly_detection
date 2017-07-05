@@ -1,7 +1,11 @@
+"""
+this script reads an output from C++ and
+rewrites it into a json file format
+"""
 import datetime
 import os
 fname = "flagged_purchases.flagged"
-#write to json
+
 
 assert(os.path.isfile(fname))
 f = open(fname, "r")

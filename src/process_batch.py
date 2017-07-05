@@ -1,3 +1,7 @@
+"""
+this script reads the input json file and outputs 3 files for
+purchases, befriends, and unfriends in an easy format to parse in C++ 
+"""
 import datetime
 import json_ops
 params_file_name = "batch_log.params"
@@ -15,9 +19,10 @@ purchase_file = open(purchase_file_name, "w")
 for timestring, pid, amount in states["purchase"]:
     purchase_file.write("%s %s %s\n" % (timestring, pid, amount))
     pass
-
 purchase_file.close()
 print __file__, "wrote", purchase_file.name
+
+
 
 befriend_file = open(befriend_file_name, "w")
 for timestring, id1, id2 in states["befriend"]:
@@ -25,6 +30,8 @@ for timestring, id1, id2 in states["befriend"]:
     pass
 befriend_file.close()
 print __file__, "wrote", befriend_file.name
+
+
 
 unfriend_file = open(unfriend_file_name, "w")
 for timestring, id1, id2 in states["unfriend"]:
