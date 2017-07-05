@@ -1,5 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
+//functions/classes for forming networks
+//node represents a particular person (integer id)
 #include <iostream>
 #include <stdio.h>
 #include <map>
@@ -16,13 +18,13 @@ template <typename T>
 class LinkedListObject;
 
 /*
-  general linked list object, a shell structure around the data, which is typically a pointer
+  general linked list object, a shell structure around the data
  */
 template <typename T>
 class LinkedListObject
 {
  public:
-  //initialization
+
   LinkedListObject(T* data){
     this->m_data = data;
     this->m_next = NULL;
@@ -48,8 +50,6 @@ class LinkedListObject
   }
 
   // assignment operator
-  // see 
-  // http://www.learncpp.com/cpp-tutorial/911-the-copy-constructor-and-overloading-the-assignment-operator/
   LinkedListObject<T>& operator= (const LinkedListObject<T>& source){
     if (this == &source)
       return *this;
@@ -97,14 +97,6 @@ class LinkedList
     this->m_head = NULL;
   }
   
-  /* the starting point for iterations. An example:
-     LinkedList<Object<2> > alist;
-     LinkedListObject<Object<2> >* head = alist.getHead();
-     for(int i = 0; i < alist.getSize(); ++i){
-         std::cout<<"print list data: "<< head -> m_data -> m_data <<std::endl;
-         head = head->m_next;
-     }
-  */
   obj_td* getHead(){
     return this->m_head;
   }
@@ -128,7 +120,6 @@ class LinkedList
   
   /* destructor, delete the linked list elements*/
   ~LinkedList(){
-    //std::cout<<"linked_list.h: destructor"<<std::endl;
     obj_td* head = this->getHead();
     for(int i = 0; i < this->getSize(); ++i){
       obj_td* next = head->m_next;
@@ -172,6 +163,7 @@ class LinkedList
     std::string s = "LinkedList, size:" + this->getSize();
     return s;
   }
+
   void deleteParticle(T* p){
     obj_td* obj = this->getHead();
     obj_td* prevobj;
@@ -196,9 +188,7 @@ class LinkedList
     }
     if (found == 0){
       printf("error in delete particle\n");
-      //throw 20;
     }
-    //    printf("delete particle ok\n");
   }
 };
 
@@ -213,10 +203,27 @@ typedef LinkedListObject<purchase_t> llo_purchase_td;
 typedef LinkedList<purchase_t> ll_purchase_td;
 
 
+//recursive function to get the nth degree connections off of node
+//a map is used so that duplicate ids are not double counted
+void get_nth_degree_network(node_t* node, 
+			    int n, 
+			    int recursion_depth, 
+			    node_imap_td** nodemap);
 
-void get_nth_degree_network(node_t* node, int n, int recursion_depth = 1, node_imap_td** nodemap = NULL);
-void get_n_purchases(node_imap_td* nodemap, date_t start_time, int n, std::vector<purchase_t>* purchases, int* nout);
-void compute_purchase_stats(std::vector<purchase_t>& purchases, double* meanout, double* sdout);
+//get the last n purchases within a network
+//start_time is decremented by one month every iteration
+//until the target number is reached
+//or all network purchases are exhausted
+void get_n_purchases(node_imap_td* nodemap, 
+		     date_t start_time, 
+		     int n, 
+		     std::vector<purchase_t>* purchases, 
+		     int* nout);
+
+//mean and standard deviation from an array of purchases
+void compute_purchase_stats(std::vector<purchase_t>& purchases, 
+			    double* meanout, 
+			    double* sdout);
 
 class node_t
 {
@@ -225,33 +232,40 @@ private:
   int m_npurchases;
   
 public:
-
   int m_id;
   int m_layer;
-  //node_map_td* m_network;
+  
+
+  //for reuse of a network 
+  int m_current_network_order;
   node_imap_td* m_nodemap_network; //nth order network for reuse
+  
   node_imap_td* m_inetwork;//1st order network with unique ids
   
   llist_td* m_network;
-  int m_current_network_order;
-  //https://stackoverflow.com/questions/238008/relative-performance-of-stdvector-vs-stdlist-vs-stdslist
+  
 
   void print_purchases();
+  
+  //record purchase to this node
   void add_purchase(purchase_t& p);
+  
+  //get the number of purchases after the probed time
   void get_n_purchases_after(date_t probetime,
 			     int* exhausted_flag,
 			     int* n);
   
+  //mean and sd from last n_purchases in a network
+  //nout is given as output in case less than n_purchases are found
   void get_purchase_mean_and_sd(int n_purchases, 
 				date_t start_time, 
 				double* mean, 
 				double* sd, 
 				int* nout);
   
-  /*
-    generate network off of this node and store it in memory for
-    later use off of streaming data
-   */
+
+  //generate network off of this node and store it in memory for
+  //    later use off of streaming data
   void set_nth_order_network(int n){
     if(n == this->m_current_network_order){
       //pass
@@ -261,18 +275,21 @@ public:
       this->m_current_network_order = n;
     }
   }
-  
+
+  //get purchase objects after arg @probetime in a sorted map
   void get_purchases_after(date_t probetime, 
 			   int exhausted_flag, 
 			   std::map<date_t, std::vector<purchase_t> >* purchase_map);
+
+  //
   std::string __repr__(){
     char buff[100];
     sprintf(buff, "node_t: %d %d", this->m_id, this->m_layer);
     std::string repr = buff;
-    //std::string repr = "node_t: %d";
     return repr;
   }
-  
+
+  //
   node_t(int id){
     m_id = id;
     m_layer = 1e9;
@@ -282,29 +299,13 @@ public:
     this->append(this);
     this->m_nodemap_network = new node_imap_td;
     this->m_current_network_order = 0;
-    //m_list = new llist_td;
   }
-  
-  /*  void print_network(){
-    node_imap_td::iterator it;
-    for(it = m_inetwork->begin(); it != m_inetwork->end(); it++){
-      //it->first; //person id
-      //it->second; //node_t*
-      printf("network %d: <=> %d", this->m_id, it->first);
-    }
-  */
-    /*std::cout<<this->m_network->printList()<<std::endl;
-    llobj_td* head = this->m_network->getHead();
-    for(int i = 0; i < this->m_network->getSize(); ++i){
-      //std::cout<<head->m_data->
-      head = head->m_next;
-      }*/
 
-  //  }
   void reset_layer(){
     m_layer = 1e9;
   }
-  
+
+  //remove two nodes' connections
   void decouple(node_t* n){
     if(m_inetwork->count(n->m_id)){
       m_network->deleteParticle(n);
@@ -316,6 +317,7 @@ public:
     }
   }
   
+  //associate two nodes
   void append(node_t* n){
     //two way
     m_network->addItem(n);
@@ -342,11 +344,9 @@ public:
 template class LinkedListObject<node_t>;
 template class LinkedList<node_t>;
 
+
+//for debugging
 void print_network(node_imap_td* nodemap);
-
-
-//std::vector<std::string> find_lines(std::string filename, std::string tag);
-
 
 
 #endif

@@ -18,6 +18,8 @@ class date_t
 //comparison operator. Mainly this lets one do comparisons on a standard
 //calendar and not get into trouble with leap years by oversizing some parameters
 
+//had some trouble with large ints when trying to compute 
+//total seconds from year 0
  public:
   int m_hour;
   int m_min;
@@ -114,9 +116,6 @@ class date_t
     
     return *this;
   }
-
-
-  
 
   std::vector<unsigned long long int> date_to_vec_full() const{
     std::vector<unsigned long long int> retval(7);

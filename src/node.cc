@@ -1,123 +1,129 @@
 #include "node.h"
+
 void node_t::get_purchase_mean_and_sd(int n_purchases, 
 				      date_t start_time,
 				      double* mean, 
 				      double* sd, 
 				      int* nout){
   //@start_time: initial guess for how far back to go
-  std::vector<purchase_t> local_purchases;
-  //gets the last n purchases in this nodes' nth order network
+  //@n_purchases: target number of purchases to achieve
+  //requires nth order network to be already set
   
+  std::vector<purchase_t> local_purchases;
+
+  //get the last n purchases in this nodes' currently set 
+  //nth order network
   get_n_purchases(this->m_nodemap_network, 
 		  start_time, 
 		  n_purchases,
 		  &local_purchases,
 		  nout);
+  
   compute_purchase_stats(local_purchases, mean, sd);
     
 }
 
 void node_t::get_purchases_after(date_t probetime, 
-			   int exhausted_flag, 
-			   std::map<date_t, std::vector<purchase_t> >* purchase_map){
-    //assumes m_purchases is sorted (done in add_purchase)
-    
-    //simply add all purchases with no checks if exhausted_flag
-    if(exhausted_flag == 1){
-      std::vector<purchase_t>::reverse_iterator it;
-      for (it = m_purchases.rbegin(); 
-	   it != m_purchases.rend(); 
-	   ++it ) { 
-	purchase_t* p = &(*it);
-	(*purchase_map)[p->m_date_of_purchase].push_back(*p);
-      }
-      return ;
-    } 
-    
-    //else
-    //check each purchase for probetime
+				 int exhausted_flag, 
+				 std::map<date_t, std::vector<purchase_t> >* purchase_map){
+  //assumes m_purchases is sorted (done in add_purchase)
+  //simply add all purchases with no checks if exhausted_flag
+  if(exhausted_flag == 1){
     std::vector<purchase_t>::reverse_iterator it;
-    int count = 0;
     for (it = m_purchases.rbegin(); 
 	 it != m_purchases.rend(); 
 	 ++it ) { 
       purchase_t* p = &(*it);
-      if(p->m_date_of_purchase >= probetime){
-	//add to list
-	(*purchase_map)[p->m_date_of_purchase].push_back(*p);
-	count ++;
-      } else {
-	//done
-	return;
-      }
+      (*purchase_map)[p->m_date_of_purchase].push_back(*p);
     }
+    return ;
+  } 
     
-  }
-void node_t::get_n_purchases_after(date_t probetime, int* exhausted_flag, int* n){
-    //number of purchases after probed time
-    //@exhausted_flag : 1 if there are no remaining purchases
-    //@n: number of purchases found
-    //assumes m_purchases is sorted (done in add_purchase)
-    //
-    
-    std::vector<purchase_t>::reverse_iterator it;
-    int count = 0;
-    for (it = m_purchases.rbegin(); 
-	 it != m_purchases.rend(); 
-	 ++it ) { 
-      purchase_t* p = &(*it);
-      if(p->m_date_of_purchase >= probetime){
-	//add to list
-	count ++;
-      } else {
-	break;
-      }
-    }
-    
-    *n = count;
-    
-    if(count == m_npurchases){
-      *exhausted_flag = 1;
+  //else
+  //check each purchase for probetime
+  std::vector<purchase_t>::reverse_iterator it;
+  int count = 0;
+  for (it = m_purchases.rbegin(); 
+       it != m_purchases.rend(); 
+       ++it ) { 
+    purchase_t* p = &(*it);
+    if(p->m_date_of_purchase >= probetime){
+      //add to list
+      (*purchase_map)[p->m_date_of_purchase].push_back(*p);
+      count ++;
     } else {
-      *exhausted_flag = 0;
+      //done
+      return;
     }
-    
   }
-  //add purchase to id's list
-  //make sure this list is in proper time order 
-  //(later elements are more recent)
+    
+}
+
+void node_t::get_n_purchases_after(date_t probetime, int* exhausted_flag, int* n){
+  //number of purchases after probed time
+  //@exhausted_flag : 1 if there are no remaining purchases
+  //@n: number of purchases found
+  //assumes m_purchases is sorted (done in add_purchase)
+
+    
+  std::vector<purchase_t>::reverse_iterator it;
+  int count = 0;
+  for (it = m_purchases.rbegin(); 
+       it != m_purchases.rend(); 
+       ++it ) { 
+    purchase_t* p = &(*it);
+    if(p->m_date_of_purchase >= probetime){
+      //add to list
+      count ++;
+    } else {
+      break;
+    }
+  }
+  
+  *n = count;
+  
+  if(count == m_npurchases){
+    *exhausted_flag = 1;
+  } else {
+    *exhausted_flag = 0;
+  }
+    
+}
+
+//add purchase to id's list
+//make sure this list is in proper time order 
+//(later elements are more recent)
 void node_t::add_purchase(purchase_t& newp){
-    //most of the time just add to end
-    
-    newp.set_id(this->m_id);
-    
-    if(m_npurchases == 0){
-      m_purchases.push_back(newp);
+  //most of the time just add to end
+  
+  newp.set_id(this->m_id);
+  
+  if(m_npurchases == 0){
+    m_purchases.push_back(newp);
+    m_npurchases += 1;
+    return;
+  }
+  
+  std::vector<purchase_t>::reverse_iterator it;
+  for (it = m_purchases.rbegin(); 
+       it != m_purchases.rend(); 
+       ++it ) { 
+    purchase_t* oldp = &(*it);//.base();
+    if(newp < *oldp){
+      //if newp is older than oldp due to time asynchronization in the stream input
+      continue;
+    } else {
+      //newp is newer than oldp -- insert it
+      m_purchases.insert(it.base(), newp);
       m_npurchases += 1;
       return;
     }
-
-    std::vector<purchase_t>::reverse_iterator it;
-    for (it = m_purchases.rbegin(); 
-	 it != m_purchases.rend(); 
-	 ++it ) { 
-      purchase_t* oldp = &(*it);//.base();
-      if(newp < *oldp){
-	//if newp is older than oldp due to time asynchronization
-	//
-	continue;
-      } else {
-	//newp is newer than oldp -- insert it
-	m_purchases.insert(it.base(), newp);
-	m_npurchases += 1;
-	return;
-      }
-    }
-    
-    m_purchases.insert(m_purchases.begin(), newp);
-    m_npurchases+=1;
-    
   }
+  
+  m_purchases.insert(m_purchases.begin(), newp);
+  m_npurchases+=1;
+  
+}
 
 void node_t::print_purchases(){
     std::vector<purchase_t>::iterator it = m_purchases.begin();
@@ -126,7 +132,7 @@ void node_t::print_purchases(){
     }
   }
 
-//private
+
 void copy_list_to_map(llist_td* list_to_copy_from, 
 		      node_imap_td* to_copy_to,
 		      int layer){
@@ -137,9 +143,9 @@ void copy_list_to_map(llist_td* list_to_copy_from,
   int nvalues = list_to_copy_from->getSize();
   for(int j = 0; j < nvalues; ++j){
     node_t* node = values->m_data;
-    //
+
     node->m_layer = minfunc(node->m_layer, layer);
-    //
+
     (*to_copy_to)[node->m_id] = node;
     values = values->m_next;
   }
@@ -173,6 +179,8 @@ void compute_purchase_stats(std::vector<purchase_t>& purchases, double* meanout,
   *sdout = sd;
   
 }
+
+//recursive on network, then network of network for n = 2, etc. 
 void get_nth_degree_network(node_t* node, int n, int recursion_depth, node_imap_td** nodemap){
   if (recursion_depth == 1){
     (*nodemap) = new node_imap_td;
@@ -206,17 +214,23 @@ void get_n_purchases(node_imap_td* nodemap,
 		     std::vector<purchase_t>* allpurchases, 
 		     int* nout){
   //get the most recent n purchases in the network
+  //iterative process where the time is decremented further
+  //and further back until n purchases are found or the list is exhausted
+  
   int total_n = 0;
   int exhausted_count = 0;
   int local_n;
   int exhausted_flag;
+
+  //FIXME
+  //certain data may need larger or smaller decrements in time
   //date_t one_day = date_t::one_day();
   //date_t one_year = date_t::one_year();
   date_t one_month = date_t::one_month();
   date_t probe_time = start_time;
   date_t one_inc = one_month;
-  //  printf("nodemap size %lud\n", nodemap->size());
-  //std::cout<<probe_time.__repr__()<<std::endl;
+
+
   int iter = 0;
   std::vector<int> exhausted_record(nodemap->size());
   int kk = 0;
@@ -259,7 +273,7 @@ void get_n_purchases(node_imap_td* nodemap,
     exhausted_count += exhausted_flag;
   }
   
-  //now take in the first n purchases;
+  //now take in the first n purchases from the sorted map
   allpurchases->clear();
   std::map<date_t, std::vector<purchase_t> >::reverse_iterator rit;
   int ct = 0;
@@ -278,28 +292,11 @@ void get_n_purchases(node_imap_td* nodemap,
       }
     }
   }
-  //if(*nout == n){
-    //printf("success\n");
-  //}
   *nout = ct;
   
 }
 
 
-void copy_map_to_map(node_map_td* map_to_copy_from, node_map_td* to_copy_to){
-  node_map_td::iterator it;
-  for(it = map_to_copy_from->begin(); it != map_to_copy_from->end(); it++){
-    llist_td* values = it->second;
-    llobj_td* value = values->getHead();
-    llist_td* values_to_copy_to = (*to_copy_to)[it->first];
-    for(int j = 0; j < values->getSize(); ++j){
-      values_to_copy_to->addItem(value->m_data);
-      value = value->m_next;
-    }
-    //additem
-
-  }
-}
 
 
 void print_network(node_imap_td* nodemap){

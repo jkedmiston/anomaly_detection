@@ -1,5 +1,7 @@
 #ifndef PURCHASE_H
 #define PURCHASE_H
+//basic object for storing date of purchase, amount, and person (node)
+
 #include "date_object.h"
 #include <iostream>
 
@@ -15,7 +17,7 @@ class purchase_t
   purchase_t(){
     m_amount = -1000;
   }
-  
+
   purchase_t(int hour, int min, int sec, int day, int month, int year, double amount){
     m_date_of_purchase.init(hour, min, sec, day, month, year);
     m_amount  = amount;
@@ -76,7 +78,6 @@ inline bool operator<(const purchase_t& arg1, const purchase_t& arg2){
   return arg1.m_date_of_purchase < arg2.m_date_of_purchase;
 }
 inline std::ostream& operator<<(std::ostream& out, purchase_t& arg1){
-  //std::string s = arg1.__repr__();
   char buff[300];
   sprintf(buff, "%.2d:%.2d:%.2d %.2d/%.2d/%.4d: %5.2f id: %d", arg1.m_date_of_purchase.m_hour, arg1.m_date_of_purchase.m_min, arg1.m_date_of_purchase.m_sec, arg1.m_date_of_purchase.m_day, arg1.m_date_of_purchase.m_month, arg1.m_date_of_purchase.m_year, arg1.m_amount, arg1.m_id);
   out << "purchase_t: " << buff;
