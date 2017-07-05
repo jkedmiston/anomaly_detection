@@ -7,8 +7,8 @@ declare -r color_blue="${color_start}0;34m"
 declare -r color_norm="${color_start}0m"
 
 GRADER_ROOT=$(dirname ${BASH_SOURCE})
-echo $GRADER_ROOT
-echo hi
+
+
 PROJECT_PATH=${GRADER_ROOT}/..
 
 function print_dir_contents {
