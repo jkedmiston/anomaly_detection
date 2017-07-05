@@ -1,5 +1,5 @@
 TARGET=flag_purchases.exe
-MAIN = mainc.o
+MAIN = main.o
 OBJECTS = misc.o node.o purchase.o date_object.o
 LFLAGS = 
 CC=g++
@@ -15,8 +15,8 @@ debug: $(TARGET)
 $(TARGET):	$(OBJECTS) $(MAIN)
 	$(CC) -o $(TARGET) $(OBJECTS) $(MAIN) $(LFLAGS)
 
-mainc.o: mainc.cc
-	$(CC) $(CFLAGS) mainc.cc
+main.o: main.cc
+	$(CC) $(CFLAGS) main.cc
 
 misc.o: misc.cc
 	$(CC) $(CFLAGS) misc.cc

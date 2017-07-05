@@ -13,21 +13,21 @@ for timestring, pid, amount in states["purchase"]:
     purchase_file.write("%s %s %s\n" % (timestring, pid, amount))
     pass
 purchase_file.close()
-print "wrote", purchase_file.name
+print __file__, "wrote", purchase_file.name
 
 befriend_file = open(befriend_file_name, "w")
 for timestring, id1, id2 in states["befriend"]:
     befriend_file.write("%s %s %s\n" % (timestring, id1, id2))
     pass
 befriend_file.close()
-print "wrote", befriend_file.name
+print __file__, "wrote", befriend_file.name
 
 unfriend_file = open(unfriend_file_name, "w")
 for timestring, id1, id2 in states["unfriend"]:
     unfriend_file.write("%s %s %s\n" % (timestring, id1, id2))
     pass
 unfriend_file.close()
-print "wrote", unfriend_file.name
+print __file__, "wrote", unfriend_file.name
 
 
 

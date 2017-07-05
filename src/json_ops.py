@@ -7,7 +7,7 @@ def process_batch(fname, has_params = 0, caller = None):
         if line.strip()=='':
             continue
         if(kk % 10000 == 0):
-            print caller, "read line %d" % kk
+            print caller, ": json_ops.py.process_batch(): reading line %d in %s" % (kk, fname)
         if(kk == 0 and has_params):
             d_and_t = eval(line)
             states["network_dimension"] = d_and_t["D"] #network dimension

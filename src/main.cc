@@ -1,3 +1,5 @@
+//executes the processing and flagging of network purchases
+
 #include "node.h"
 #include <fstream>
 #include "purchase.h"
@@ -63,11 +65,16 @@ void build_friends(std::string friendfile,
   while(myfile){
     std::string strInput;
     std::getline(myfile,strInput);
+    if(strInput.length() < 5){
+      continue;
+    }
+
     sscanf(strInput.c_str(), "%d %d %d %d %d %d %d %d", &hour, &minute, &second, &day, &month, &year, &id1, &id2);
     
     date_t t(hour, minute, second, day, month, year);
     node_t* node_id1;
     node_t* node_id2;
+    
     //make new nodes if not in global data
     if(unique_people->count(id1) == 0){
       //make new node
@@ -173,7 +180,7 @@ void read_paramsfile(std::string filename, int* network_dimension, int* n_purcha
 }
 void build_network(std::string filename, std::vector<node_t*>* allpeople, std::map<int, node_t*>* unique_people, int network_dimension){
 
-  printf("building social network of degree %d...\n", network_dimension);
+  printf("building social network of degree %d from %s...\n", network_dimension, filename.c_str());
   std::string befriends = filename + ".befriends";
   std::string unfriends = filename + ".unfriends";
 
@@ -216,7 +223,7 @@ void build_purchases(std::string filename,
 		     std::map<int, node_t*>* unique_people, 
 		     std::vector<purchase_t>* purchase_list, 
 		     int add_to_network){
-  printf("building purchases...\n");
+  printf("building purchases from %s ...\n", filename.c_str());
   std::string purchases = filename + ".purchases";
   std::ifstream myfile;
   myfile.open(purchases.c_str());
@@ -323,13 +330,10 @@ void flag_purchases(std::string flagged_filename,
 
 
 int main(int argc, char* argv[]){
-  //read in stream_log.json
-
   std::vector<node_t*> allpeople;
   int network_dimension;
   int n_purchases;
   
-
   //initial set up from batch file
   std::string inputfile_name_base = "batch_log";
   std::map<int, node_t*> unique_people;
