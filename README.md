@@ -22,8 +22,11 @@ Sequence:
 
 ### Tests
 Some unit tests for low level functions are in src/tests
+
 execute:
+
 cd src/tests
+
 ./run_tests.sh
 
 
