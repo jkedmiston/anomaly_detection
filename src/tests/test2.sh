@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
 cd ..
-make -f Makefile_test1
+make -f Makefile_test2
 cd tests
-./test1.exe
+./test2.exe
